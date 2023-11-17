@@ -70,16 +70,10 @@ class Display3DNode(Node):
         scene2.select()
         # Roll, Pitch, Yaw
         # Default reference, i.e. x runs right, y runs up, z runs backward (out of screen)
-        self.cil_roll = cylinder(pos=vector(-0.5, 0.3, 0), axis=vector(0.2, 0, 0), radius=0.01,
-                                 color=color.red)
-        self.cil_roll2 = cylinder(pos=vector(-0.5, 0.3, 0), axis=vector(-0.2, 0, 0), radius=0.01,
-                                  color=color.red)
-        self.cil_pitch = arrow(pos=vector(0.5, 0.3, 0), axis=vector(0, 0, -0.4), shaftwidth=0.02,
-                               color=color.green)
-        self.arrow_course = arrow(pos=vector(0.0, -0.4, 0), color=color.cyan,
-                                  axis=vector(0, 0.2, 0),
-                                  shaftwidth=0.02,
-                                  fixedwidth=1)
+        self.cil_roll = cylinder(pos=vector(-0.5, 0.3, 0), axis=vector(0.2, 0, 0), radius=0.01, color=color.red)
+        self.cil_roll2 = cylinder(pos=vector(-0.5, 0.3, 0), axis=vector(-0.2, 0, 0), radius=0.01, color=color.red)
+        self.cil_pitch = arrow(pos=vector(0.5, 0.3, 0), axis=vector(0, 0, -0.4), shaftwidth=0.02, color=color.green)
+        self.arrow_course = arrow(pos=vector(0.0, -0.4, 0), color=color.cyan, axis=vector(0, 0.2, 0), shaftwidth=0.02, fixedwidth=1)
 
         # Roll,Pitch,Yaw labels
         label(pos=vector(-0.5, 0.6, 0), text="Roll (degrees / radians)", box=0, opacity=0)

@@ -2,35 +2,38 @@ from glob import glob
 import os
 from setuptools import setup, find_packages
 
-PACKAGE_NAME = "ros2_razor_imu"
-SHARE_DIR = os.path.join("share", PACKAGE_NAME)
+package_name = "ros2_razor_imu"
+SHARE_DIR = os.path.join("share", package_name)
 
 setup(
-    name=PACKAGE_NAME,
-    version='1.2.0',
-    packages=find_packages("src"),
-    package_dir={'': 'src'},
+    name=package_name,
+    version='1.3.0',
+    packages=[package_name],
     data_files=[
         ('share/ament_index/resource_index/packages',
-         ['resource/' + PACKAGE_NAME]),
-        (os.path.join(SHARE_DIR, "launch"), glob(os.path.join("launch", "*.launch.py"))),
-        (os.path.join(SHARE_DIR, "config"), glob(os.path.join("config", "*.yaml")))],
-    py_modules=[],
-    zip_safe=True,
+            ['resource/' + package_name]),
+        ('share/' + package_name, ['package.xml']),
+        (os.path.join('share', package_name, "launch"), glob('launch/*.launch.py')),
+        (os.path.join('share', package_name, "config"), glob('config/*')),
+        (os.path.join('share', package_name, 'config'), glob('config/*.yaml')),
+        ],
+    
     install_requires=['setuptools',
-                      'pyserial',
-                      'pyyaml',
-                      'transforms3d',
-                      'vpython',
-                      'wxPython'],
+                        'pyserial',
+                        'pyyaml',
+                        'transforms3d',
+                        'vpython',
+                        'wxPython'],
+    zip_safe=True,
     author='Kristof Robot, Tang Tiong Yew, Paul Bouchier, Peter Bartz',
     maintainer='Kristof Robot',
     keywords=['ROS2'],
     description='ros2_razor_imu is a package that provides a ROS2 driver for the Sparkfun Razor IMU 9DOF.',
     license='BSD',
+    tests_require=['pytest'],
     entry_points={
         'console_scripts': ['imu_node = ros2_razor_imu.imu_node:main',
-                            'display_3D_visualization_node = ros2_razor_imu.display_3D_visualization:main'
+                            'display_3D_visualization_node = ros2_razor_imu.display_3D_visualization:main',
                             ],
     }
 )

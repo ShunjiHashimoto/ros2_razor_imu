@@ -33,7 +33,7 @@ import serial
 import math
 import sys
 from time import sleep
-from ros2_razor_imu.lib.serial_commands import *
+from .serial_commands import *
 import yaml
 import time
 
@@ -58,16 +58,16 @@ class RazorImuDriver(Node):
         imu_msg = Imu()
         # TODO arrays not supported as parameter type ROS2
         imu_msg.orientation_covariance = [0.0025, 0.0, 0.0,
-                                          0.0, 0.0025, 0.0,
-                                          0.0, 0.0, 0.0025]
+                                            0.0, 0.0025, 0.0,
+                                            0.0, 0.0, 0.0025]
         # self.declare_parameter('orientation_covariance').value
         imu_msg.angular_velocity_covariance = [0.002, 0.0, 0.0,
-                                               0.0, 0.002, 0.0,
-                                               0.0, 0.0, 0.002]
+                                                0.0, 0.002, 0.0,
+                                                0.0, 0.0, 0.002]
         # self.declare_parameter('velocity_covariance').value
         imu_msg.linear_acceleration_covariance = [0.04, 0.0, 0.0,
-                                                  0.0, 0.04, 0.0,
-                                                  0.0, 0.0, 0.04]
+                                                    0.0, 0.04, 0.0,
+                                                    0.0, 0.0, 0.04]
         # self.declare_parameter('acceleration_covariance').value
         imu_msg.header.frame_id = self.declare_parameter('frame_header', 'base_imu_link').value
 
@@ -77,13 +77,13 @@ class RazorImuDriver(Node):
             pub_mag = self.create_publisher(MagneticField, 'mag', 1)
             mag_msg = MagneticField()
             mag_msg.magnetic_field_covariance = [0.00, 0.0, 0.0,
-                                                 0.0, 0.00, 0.0,
-                                                 0.0, 0.0, 0.00]
+                                                    0.0, 0.00, 0.0,
+                                                    0.0, 0.0, 0.00]
             # self.declare_parameter('magnetic_field_covariance').value
             mag_msg.header.frame_id = self.get_parameter_or('frame_header', 'base_imu_link').value
             # should a separate diagnostic for the Magnetometer be done?
 
-        port = self.declare_parameter('port', '/dev/tty.usbmodem146401').value
+        port = self.declare_parameter('port', '/dev/ttyACM0').value
 
         # read calibration parameters
         self.calib_dict = {}
@@ -103,21 +103,17 @@ class RazorImuDriver(Node):
         self.calib_dict["magn_y_max"] = self.declare_parameter('magn_y_max', 600.0).value
         self.calib_dict["magn_z_min"] = self.declare_parameter('magn_z_min', -600.0).value
         self.calib_dict["magn_z_max"] = self.declare_parameter('magn_z_max', 600.0).value
-        self.calib_dict["magn_use_extended"] = self.declare_parameter(
-            'calibration_magn_use_extended', False).value
-        self.calib_dict["magn_ellipsoid_center"] = self.declare_parameter('magn_ellipsoid_center',
-                                                                          [0, 0, 0]).value
+        self.calib_dict["magn_use_extended"] = self.declare_parameter('calibration_magn_use_extended', False).value
+        self.calib_dict["magn_ellipsoid_center"] = self.declare_parameter('magn_ellipsoid_center', [0, 0, 0]).value
         # TODO Array of arrays not supported as parameter type ROS2
+        # You can pass it as 1D array and then reshape here ( I will update in the next commit)
         self.calib_dict["magn_ellipsoid_transform"] = [[0, 0, 0], [0, 0, 0], [0, 0, 0]]
         # self.declare_parameter('magn_ellipsoid_transform',[[0, 0, 0], [0, 0, 0], [0, 0, 0]]).value
 
         # gyroscope
-        self.calib_dict["gyro_average_offset_x"] = self.declare_parameter('gyro_average_offset_x',
-                                                                          0.0).value
-        self.calib_dict["gyro_average_offset_y"] = self.declare_parameter('gyro_average_offset_y',
-                                                                          0.0).value
-        self.calib_dict["gyro_average_offset_z"] = self.declare_parameter('gyro_average_offset_z',
-                                                                          0.0).value
+        self.calib_dict["gyro_average_offset_x"] = self.declare_parameter('gyro_average_offset_x', 0.0).value
+        self.calib_dict["gyro_average_offset_y"] = self.declare_parameter('gyro_average_offset_y', 0.0).value
+        self.calib_dict["gyro_average_offset_z"] = self.declare_parameter('gyro_average_offset_z', 0.0).value
 
         imu_yaw_calibration = self.declare_parameter('imu_yaw_calibration', 0.0).value
 
@@ -164,8 +160,7 @@ class RazorImuDriver(Node):
         while rclpy.ok():
             line = ser.readline().decode("utf-8")
             if not line.startswith(line_start):
-                self.get_logger().error(1,
-                                        "Did not find correct line start in the received IMU message")
+                self.get_logger().error("Did not find correct line start in the received IMU message")
                 continue
             line = line.replace(line_start, "")  # Delete "#YPRAG=" or "#YPRAGM="
             words = line.split(",")  # Fields split
@@ -240,7 +235,6 @@ class RazorImuDriver(Node):
 
                 diag_arr.status.append(diag_msg)
                 diag_pub.publish(diag_arr)
-
         ser.close()
 
     def send_command(self, serial_instance, command, value=None):
@@ -273,37 +267,22 @@ class RazorImuDriver(Node):
             self.send_command(serial_instance, SET_MAG_Z_MIN, calib_dict["magn_z_min"])
             self.send_command(serial_instance, SET_MAG_Z_MAX, calib_dict["magn_z_max"])
         else:
-            self.send_command(serial_instance, SET_MAG_ELLIPSOID_CENTER_0,
-                              self.calib_dict["magn_ellipsoid_center"][0])
-            self.send_command(serial_instance, SET_MAG_ELLIPSOID_CENTER_1,
-                              self.calib_dict["magn_ellipsoid_center"][1])
-            self.send_command(serial_instance, SET_MAG_ELLIPSOID_CENTER_2,
-                              self.calib_dict["magn_ellipsoid_center"][2])
-            self.send_command(serial_instance, SET_MAG_ELLIPSOID_TRANSFORM_0_0,
-                              self.calib_dict["magn_ellipsoid_transform"][0][0])
-            self.send_command(serial_instance, SET_MAG_ELLIPSOID_TRANSFORM_0_1,
-                              self.calib_dict["magn_ellipsoid_transform"][0][1])
-            self.send_command(serial_instance, SET_MAG_ELLIPSOID_TRANSFORM_0_2,
-                              self.calib_dict["magn_ellipsoid_transform"][0][2])
-            self.send_command(serial_instance, SET_MAG_ELLIPSOID_TRANSFORM_1_0,
-                              self.calib_dict["magn_ellipsoid_transform"][1][0])
-            self.send_command(serial_instance, SET_MAG_ELLIPSOID_TRANSFORM_1_1,
-                              self.calib_dict["magn_ellipsoid_transform"][1][1])
-            self.send_command(serial_instance, SET_MAG_ELLIPSOID_TRANSFORM_1_2,
-                              self.calib_dict["magn_ellipsoid_transform"][1][2])
-            self.send_command(serial_instance, SET_MAG_ELLIPSOID_TRANSFORM_2_0,
-                              self.calib_dict["magn_ellipsoid_transform"][2][0])
-            self.send_command(serial_instance, SET_MAG_ELLIPSOID_TRANSFORM_2_1,
-                              self.calib_dict["magn_ellipsoid_transform"][2][1])
-            self.send_command(serial_instance, SET_MAG_ELLIPSOID_TRANSFORM_2_2,
-                              self.calib_dict["magn_ellipsoid_transform"][2][2])
+            self.send_command(serial_instance, SET_MAG_ELLIPSOID_CENTER_0,self.calib_dict["magn_ellipsoid_center"][0])
+            self.send_command(serial_instance, SET_MAG_ELLIPSOID_CENTER_1,self.calib_dict["magn_ellipsoid_center"][1])
+            self.send_command(serial_instance, SET_MAG_ELLIPSOID_CENTER_2,self.calib_dict["magn_ellipsoid_center"][2])
+            self.send_command(serial_instance, SET_MAG_ELLIPSOID_TRANSFORM_0_0,self.calib_dict["magn_ellipsoid_transform"][0][0])
+            self.send_command(serial_instance, SET_MAG_ELLIPSOID_TRANSFORM_0_1,self.calib_dict["magn_ellipsoid_transform"][0][1])
+            self.send_command(serial_instance, SET_MAG_ELLIPSOID_TRANSFORM_0_2,self.calib_dict["magn_ellipsoid_transform"][0][2])
+            self.send_command(serial_instance, SET_MAG_ELLIPSOID_TRANSFORM_1_0,self.calib_dict["magn_ellipsoid_transform"][1][0])
+            self.send_command(serial_instance, SET_MAG_ELLIPSOID_TRANSFORM_1_1,self.calib_dict["magn_ellipsoid_transform"][1][1])
+            self.send_command(serial_instance, SET_MAG_ELLIPSOID_TRANSFORM_1_2,self.calib_dict["magn_ellipsoid_transform"][1][2])
+            self.send_command(serial_instance, SET_MAG_ELLIPSOID_TRANSFORM_2_0,self.calib_dict["magn_ellipsoid_transform"][2][0])
+            self.send_command(serial_instance, SET_MAG_ELLIPSOID_TRANSFORM_2_1,self.calib_dict["magn_ellipsoid_transform"][2][1])
+            self.send_command(serial_instance, SET_MAG_ELLIPSOID_TRANSFORM_2_2,self.calib_dict["magn_ellipsoid_transform"][2][2])
 
-        self.send_command(serial_instance, SET_GYRO_AVERAGE_OFFSET_X,
-                          self.calib_dict["gyro_average_offset_x"])
-        self.send_command(serial_instance, SET_GYRO_AVERAGE_OFFSET_Y,
-                          self.calib_dict["gyro_average_offset_y"])
-        self.send_command(serial_instance, SET_GYRO_AVERAGE_OFFSET_Z,
-                          self.calib_dict["gyro_average_offset_z"])
+        self.send_command(serial_instance, SET_GYRO_AVERAGE_OFFSET_X,self.calib_dict["gyro_average_offset_x"])
+        self.send_command(serial_instance, SET_GYRO_AVERAGE_OFFSET_Y,self.calib_dict["gyro_average_offset_y"])
+        self.send_command(serial_instance, SET_GYRO_AVERAGE_OFFSET_Z,self.calib_dict["gyro_average_offset_z"])
 
         self.send_command(serial_instance, GET_CALIBRATION_VALUES)
         config = ""
@@ -311,8 +290,7 @@ class RazorImuDriver(Node):
             # Format each line received from serial into proper yaml with lowercase variable names
             config += serial_instance.readline().decode("utf-8").lower().replace(":", ": ")
             # TODO: round the numbers, otherwise we will get false negatives in the check phase
-
-        config_parsed = yaml.load(config)
+        config_parsed = yaml.safe_load(config)
         for key in self.calib_dict:
             if key not in config_parsed:
                 self.get_logger().warning(
