@@ -202,7 +202,7 @@ class RazorImuDriver(Node):
                     mag_msg.magnetic_field.y = -float(words[10]) * 1e-7
                     mag_msg.magnetic_field.z = -float(words[11]) * 1e-7
                     # check frame orientation and units
-
+            print(f"roll: {roll:.3f}, pitch: {pitch:.3f}, yaw: {yaw:.3f}", flush=True)
             q = quaternion_from_euler(roll, pitch, yaw)
             imu_msg.orientation.x = q[0]
             imu_msg.orientation.y = q[1]

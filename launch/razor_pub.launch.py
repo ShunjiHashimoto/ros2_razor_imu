@@ -30,7 +30,7 @@ def generate_launch_description():
     
     return LaunchDescription([
         Node(package='ros2_razor_imu',
-            node_executable='imu_node', 
+            executable='imu_node', 
             name= 'imu_node', 
             output='screen',
             parameters=[configs]

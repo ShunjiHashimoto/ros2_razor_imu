@@ -61,19 +61,19 @@ Launch
 ------
 Publisher and 3D visualization:
 
-	$ ros2 launch razor_imu_9dof razor-pub-and-display.launch.py
+	$ ros2 launch ros2_razor_imu razor-pub-and-display.launch.py
 
 Publisher only:
 
-	$ ros2 launch razor_imu_9dof razor-pub.launch.py
+	$ ros2 launch ros2_razor_imu razor-pub.launch.py
 
 Publisher only with diagnostics:
 
-	$ ros2 launch razor_imu_9dof razor-pub-diags.launch.py
+	$ ros2 launch ros2_razor_imu razor-pub-diags.launch.py
 
 3D visualization only:
 
-	$ ros2 launch razor_imu_9dof razor-display.launch.py
+	$ ros2 launch ros2_razor_imu razor-display.launch.py
 
 
 Calibrate
