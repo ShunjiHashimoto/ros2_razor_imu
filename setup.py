@@ -33,6 +33,7 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': ['imu_node = ros2_razor_imu.imu_node:main',
+                            'imu_to_tf_node = ros2_razor_imu.imu_to_tf_node:main',
                             'display_3D_visualization_node = ros2_razor_imu.display_3D_visualization:main',
                             ],
     }

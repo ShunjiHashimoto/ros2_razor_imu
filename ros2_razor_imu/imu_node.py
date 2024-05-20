@@ -41,6 +41,8 @@ import time
 from sensor_msgs.msg import Imu
 from sensor_msgs.msg import MagneticField
 from transforms3d.euler import euler2quat as quaternion_from_euler
+from tf2_ros import TransformBroadcaster
+from geometry_msgs.msg import TransformStamped
 from diagnostic_msgs.msg import DiagnosticArray, DiagnosticStatus, KeyValue
 
 degrees2rad = math.pi / 180.0
@@ -50,7 +52,8 @@ class RazorImuDriver(Node):
     def __init__(self):
         super().__init__('imu_node')
         # We only care about the most recent measurement, i.e. queue_size=1
-        pub_imu = self.create_publisher(Imu, 'imu', 1)
+        self.pub_imu = self.create_publisher(Imu, 'imu', 1)
+        self.tf_broadcaster = TransformBroadcaster(self)
 
         diag_pub = self.create_publisher(DiagnosticArray, 'diagnostics', 1)
         diag_pub_time = self.get_clock().now()
@@ -69,7 +72,7 @@ class RazorImuDriver(Node):
                                                     0.0, 0.04, 0.0,
                                                     0.0, 0.0, 0.04]
         # self.declare_parameter('acceleration_covariance').value
-        imu_msg.header.frame_id = self.declare_parameter('frame_header', 'base_imu_link').value
+        imu_msg.header.frame_id = self.declare_parameter('frame_header', 'imu_link').value
 
         publish_magnetometer = self.declare_parameter('publish_magnetometer', False).value
 
@@ -80,7 +83,7 @@ class RazorImuDriver(Node):
                                                     0.0, 0.00, 0.0,
                                                     0.0, 0.0, 0.00]
             # self.declare_parameter('magnetic_field_covariance').value
-            mag_msg.header.frame_id = self.get_parameter_or('frame_header', 'base_imu_link').value
+            mag_msg.header.frame_id = self.get_parameter_or('frame_header', 'imu_link').value
             # should a separate diagnostic for the Magnetometer be done?
 
         port = self.declare_parameter('port', '/dev/ttyACM0').value
@@ -202,14 +205,16 @@ class RazorImuDriver(Node):
                     mag_msg.magnetic_field.y = -float(words[10]) * 1e-7
                     mag_msg.magnetic_field.z = -float(words[11]) * 1e-7
                     # check frame orientation and units
+
             print(f"roll: {roll:.3f}, pitch: {pitch:.3f}, yaw: {yaw:.3f}", flush=True)
-            q = quaternion_from_euler(roll, pitch, yaw)
-            imu_msg.orientation.x = q[0]
-            imu_msg.orientation.y = q[1]
-            imu_msg.orientation.z = q[2]
-            imu_msg.orientation.w = q[3]
-            imu_msg.header.stamp = self.get_clock().now().to_msg()
-            pub_imu.publish(imu_msg)
+            # q = quaternion_from_euler(roll, pitch, yaw)
+            # imu_msg.orientation.x = q[0]
+            # imu_msg.orientation.y = q[1]
+            # imu_msg.orientation.z = q[2]
+            # imu_msg.orientation.w = q[3]
+            # imu_msg.header.stamp = self.get_clock().now().to_msg()
+            # pub_imu.publish(imu_msg)
+            self.publish_imu_and_tf(roll+3.14, pitch, yaw, imu_msg)
 
             if publish_magnetometer:
                 mag_msg.header.stamp = imu_msg.header.stamp
@@ -300,6 +305,34 @@ class RazorImuDriver(Node):
                 self.get_logger().warning(
                     f"The calibration value of [{key}] did not match. "
                     f"Expected: {str(self.calib_dict[key])} , received: {str(config_parsed[key])}")
+
+    def publish_imu_and_tf(self, roll, pitch, yaw, imu_msg):
+        # 四元数を計算
+        q = quaternion_from_euler(yaw, pitch, roll)
+        imu_msg.orientation.x = q[0]
+        imu_msg.orientation.y = q[1]
+        imu_msg.orientation.z = q[2]
+        imu_msg.orientation.w = q[3]
+
+        # IMUメッセージを公開
+        imu_msg.header.stamp = self.get_clock().now().to_msg()
+        self.pub_imu.publish(imu_msg)
+
+        # TFメッセージを構築
+        t = TransformStamped()
+        t.header.stamp = imu_msg.header.stamp
+        t.header.frame_id = 'base_link'  # 例えば 'world'
+        t.child_frame_id = 'imu_link'
+        t.transform.translation.x = 0.0
+        t.transform.translation.y = 0.0
+        t.transform.translation.z = 0.2
+        t.transform.rotation.x = q[0]
+        t.transform.rotation.y = q[1]
+        t.transform.rotation.z = q[2]
+        t.transform.rotation.w = q[3]
+
+        # TFを公開
+        self.tf_broadcaster.sendTransform(t)
 
 
 def main(args=None):

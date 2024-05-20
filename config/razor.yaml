@@ -1,8 +1,7 @@
 imu_node:
   ros__parameters:
-    port: /dev/ttyACM1
-    frame_header: "base_imu_link"
-
+    port: /dev/ttyACM0
+    frame_header: "imu_link"
 
     accel_x_min: -250.0
     accel_x_max: 250.0

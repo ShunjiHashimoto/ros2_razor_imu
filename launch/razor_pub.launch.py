@@ -34,5 +34,10 @@ def generate_launch_description():
             name= 'imu_node', 
             output='screen',
             parameters=[configs]
-        ),  
+        ), 
+         Node(package='ros2_razor_imu',
+            executable='imu_to_tf_node', 
+            name= 'imu_to_tf_node', 
+            output='screen',
+        ),   
     ])
