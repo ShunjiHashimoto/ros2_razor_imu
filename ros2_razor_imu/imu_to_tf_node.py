@@ -21,7 +21,7 @@ class ImuToTfNode(Node):
         t = TransformStamped()
         # 現在の時刻を設定
         t.header.stamp = self.get_clock().now().to_msg()
-        t.header.frame_id = 'base_link'
+        t.header.frame_id = 'imu_link'
         t.child_frame_id = 'laser'
         # IMUデータから姿勢を取得
         t.transform.translation.x = 0.42
